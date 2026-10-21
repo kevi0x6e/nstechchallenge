@@ -79,8 +79,10 @@ public sealed record ScenarioPlan(
             var deleteAt = id % o.DeleteEvery == 0 ? _random.Next(1, o.StateChangesPerVehicle) : -1;
             for (var step = 0; step < o.StateChangesPerVehicle; step++)
             {
-                if (step == deleteAt)
+                var next = VehicleStates.Transitions[state];
+                if (step == deleteAt || (next.Length == 0 && deleteAt > step))
                 {
+                    deleteAt = -1;
                     ops.Add(new DeleteVehicle(id));
                     if (id % (o.DeleteEvery * 2) != 0)
                     {
@@ -92,10 +94,9 @@ public sealed record ScenarioPlan(
                     continue;
                 }
 
-                var next = VehicleStates.Transitions[state];
                 if (next.Length == 0)
                 {
-                    break;
+                    break; // terminal state (DECOMMISSIONED)
                 }
 
                 state = next[_random.Next(next.Length)];

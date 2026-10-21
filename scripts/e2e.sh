@@ -59,9 +59,9 @@ for c in $(connect_api GET /connectors | jq -r '.[]'); do
   connect_api DELETE "/connectors/$c" >/dev/null
 done
 # The slot stays active for a moment after the connector task stops.
-retry 30 1 psql_exec -c "SELECT pg_drop_replication_slot(slot_name) FROM pg_replication_slots WHERE slot_name = 'fleet_cache'" >/dev/null
+retry 30 1 psql_exec -c "SELECT pg_drop_replication_slot(slot_name) FROM pg_replication_slots WHERE slot_name = 'fleet_cache'" >/dev/null 2>&1
 retry 30 1 bash -c "[[ \$(kubectl --context $CTX -n $NS exec deploy/postgres -- psql -U fleet -d fleet -qAt -c \"SELECT count(*) FROM pg_replication_slots WHERE slot_name='fleet_cache'\") == 0 ]]"
-psql_exec -c "DROP PUBLICATION IF EXISTS fleet_cache" >/dev/null
+psql_exec -c "SET client_min_messages = warning; DROP PUBLICATION IF EXISTS fleet_cache" >/dev/null
 psql_exec -f /docker-entrypoint-initdb.d/01-schema.sql >/dev/null
 kafka_bin kafka-topics.sh --delete --if-exists --topic 'fleet\.public\..*' >/dev/null 2>&1 || true
 retry 30 1 bash -c "! kubectl --context $CTX -n $NS exec deploy/kafka -- /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list | grep -q '^fleet\.public\.'"
@@ -93,6 +93,8 @@ wait "$writers" || fail "stream writers failed"
 log "5. assert cache == DB oracle"
 $TOOL e2e-assert fleet/e2e:dev assert --seed "$SEED" || fail "cache does not match the database"
 ok "cache matches the source of truth"
+echo "   worker totals since its restart (stale = duplicates/late events rejected by the version guard):"
+kc logs deploy/cache-worker | grep totals | tail -2 | sed 's/^/     /' || true
 
 log "6-7. replay checks"
 replay_checks

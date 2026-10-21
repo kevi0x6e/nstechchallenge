@@ -8,7 +8,7 @@ kc delete pod "$name" --ignore-not-found --wait=true >/dev/null
 
 kc run "$name" --image="$image" --image-pull-policy=IfNotPresent --restart=Never \
   --overrides='{"apiVersion":"v1","spec":{"enableServiceLinks":false}}' \
-  --env=PG_CONNECTION="Host=postgres;Username=fleet;Password=fleet;Database=fleet" \
+  --env=PG_CONNECTION="Host=postgres;Username=fleet;Password=fleet;Database=fleet;GSS Encryption Mode=Disable" \
   --env=VALKEY=valkey:6379 --env=KAFKA=kafka:9092 --env=GROUP_ID="$GROUP_ID" \
   -- "$@" >/dev/null
 

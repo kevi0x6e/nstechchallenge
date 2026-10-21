@@ -44,7 +44,7 @@ switch (command)
     case "assert":
     {
         var plan = ScenarioPlan.Generate(new ScenarioOptions { Seed = options.Get("seed", 42) });
-        await using var db = NpgsqlDataSource.Create(Env("PG_CONNECTION", "Host=localhost;Username=fleet;Password=fleet;Database=fleet"));
+        await using var db = NpgsqlDataSource.Create(Env("PG_CONNECTION", "Host=localhost;Username=fleet;Password=fleet;Database=fleet;GSS Encryption Mode=Disable"));
         var diffs = new List<string>();
         while (clock.Elapsed < timeout)
         {

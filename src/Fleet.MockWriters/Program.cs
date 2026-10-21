@@ -19,7 +19,7 @@ var positionsRate = options.Get("positions-rate", 1_000.0);
 var vehiclesRate = options.Get("vehicles-rate", 40.0);
 
 var connectionString = Environment.GetEnvironmentVariable("PG_CONNECTION")
-    ?? "Host=localhost;Username=fleet;Password=fleet;Database=fleet";
+    ?? "Host=localhost;Username=fleet;Password=fleet;Database=fleet;GSS Encryption Mode=Disable";
 await using var db = NpgsqlDataSource.Create(connectionString);
 
 using var cts = new CancellationTokenSource();
