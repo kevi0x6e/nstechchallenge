@@ -1,0 +1,13 @@
+bin/
+obj/
+.vs/
+.idea/
+*.user
+.DS_Store
+.devenv/
+.devenv.flake.nix
+devenv.local.nix
+.direnv/
+.devspace/
+TestResults/
+artifacts/
