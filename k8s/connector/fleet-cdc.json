@@ -1,0 +1,23 @@
+{
+  "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+  "plugin.name": "pgoutput",
+  "database.hostname": "postgres",
+  "database.port": "5432",
+  "database.user": "fleet",
+  "database.password": "fleet",
+  "database.dbname": "fleet",
+  "topic.prefix": "fleet",
+  "table.include.list": "public.vehicles,public.positions",
+  "slot.name": "fleet_cache",
+  "publication.name": "fleet_cache",
+  "publication.autocreate.mode": "filtered",
+  "snapshot.mode": "initial",
+  "message.key.columns": "public.positions:vehicle_id",
+  "decimal.handling.mode": "double",
+  "tombstones.on.delete": "true",
+  "heartbeat.interval.ms": "5000",
+  "topic.creation.default.replication.factor": "1",
+  "topic.creation.default.partitions": "3",
+  "topic.creation.default.cleanup.policy": "delete",
+  "topic.creation.default.retention.ms": "-1"
+}

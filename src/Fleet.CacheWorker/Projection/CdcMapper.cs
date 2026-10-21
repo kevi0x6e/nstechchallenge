@@ -1,3 +1,4 @@
+using System.Globalization;
 using Fleet.CacheWorker.Cdc;
 using Fleet.Contracts;
 
@@ -16,12 +17,15 @@ public static class CdcMapper
             // Snapshot reads and live inserts/updates are the same thing for a read model:
             // the LSN guard makes the snapshot -> streaming overlap harmless.
             DebeziumOp.Create or DebeziumOp.Update or DebeziumOp.Read when envelope.After is { } after =>
-                new VehicleStateChange(after.Id, version, Deleted: false, after.State, after.StateUpdatedAt),
+                new VehicleStateChange(after.Id, version, Deleted: false, after.State, ParseTimestamp(after.StateUpdatedAt)),
             DebeziumOp.Delete when envelope.Before is { } before =>
                 new VehicleStateChange(before.Id, version, Deleted: true, State: null, StateUpdatedAt: null),
             _ => null,
         };
     }
+
+    private static DateTimeOffset? ParseTimestamp(string? value) =>
+        string.IsNullOrEmpty(value) ? null : DateTimeOffset.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
 
     public static PositionObserved? ToPosition(DebeziumEnvelope<PositionRow> envelope)
     {

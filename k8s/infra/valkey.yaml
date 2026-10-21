@@ -1,0 +1,35 @@
+# The read model. No persistence: the cache is a pure projection, rebuildable from the CDC log.
+# noeviction: evicting a vehicle key would silently drop it from the view; failing loudly is better.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: valkey
+  labels: { app: valkey }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: valkey }
+  template:
+    metadata:
+      labels: { app: valkey }
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: valkey
+          image: valkey/valkey:8.1-alpine
+          args: ["--save", "", "--appendonly", "no", "--maxmemory", "96mb", "--maxmemory-policy", "noeviction"]
+          ports: [{ containerPort: 6379 }]
+          readinessProbe:
+            exec: { command: ["valkey-cli", "ping"] }
+            periodSeconds: 2
+          resources:
+            requests: { memory: 64Mi, cpu: 50m }
+            limits: { memory: 128Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: valkey
+spec:
+  selector: { app: valkey }
+  ports: [{ port: 6379 }]
