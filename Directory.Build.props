@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- Test/CLI projects don't need XML docs; analyzers stay on. -->
+    <NoWarn>$(NoWarn);CA1848;CA1515;CA2007;CA1031</NoWarn>
+  </PropertyGroup>
+</Project>

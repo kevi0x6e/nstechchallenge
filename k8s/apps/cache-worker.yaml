@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cache-worker
+  labels: { app: cache-worker }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: cache-worker }
+  template:
+    metadata:
+      labels: { app: cache-worker }
+    spec:
+      enableServiceLinks: false
+      terminationGracePeriodSeconds: 15
+      containers:
+        - name: cache-worker
+          image: fleet/cache-worker:dev
+          imagePullPolicy: IfNotPresent
+          env:
+            - { name: Kafka__BootstrapServers, value: "kafka:9092" }
+            - { name: Valkey__ConnectionString, value: "valkey:6379" }
+            - { name: DOTNET_gcServer, value: "0" }
+          resources:
+            requests: { memory: 96Mi, cpu: 100m }
+            limits: { memory: 256Mi }

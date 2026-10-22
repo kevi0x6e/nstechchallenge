@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Fleet.CacheWorker/Fleet.CacheWorker.csproj" />
+    <Project Path="src/Fleet.Contracts/Fleet.Contracts.csproj" />
+    <Project Path="src/Fleet.E2E/Fleet.E2E.csproj" />
+    <Project Path="src/Fleet.MockWriters/Fleet.MockWriters.csproj" />
+    <Project Path="src/Fleet.Scenario/Fleet.Scenario.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Fleet.CacheWorker.Tests/Fleet.CacheWorker.Tests.csproj" />
+  </Folder>
+</Solution>

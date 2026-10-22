@@ -1,0 +1,82 @@
+# Source database. wal_level=logical is what makes log-based CDC possible.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres
+stringData:
+  POSTGRES_USER: fleet
+  POSTGRES_PASSWORD: fleet
+  POSTGRES_DB: fleet
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-schema
+data:
+  01-schema.sql: |
+    -- Re-runnable: `just e2e` re-applies it to start from a clean source.
+    DROP TABLE IF EXISTS positions;
+    DROP TABLE IF EXISTS vehicles;
+
+    CREATE TABLE vehicles (
+      id               bigint      PRIMARY KEY,
+      plate            text        NOT NULL,
+      state            text        NOT NULL CHECK (state IN ('REGISTERED','ACTIVE','IDLE','MAINTENANCE','DECOMMISSIONED')),
+      state_updated_at timestamptz NOT NULL,
+      updated_at       timestamptz NOT NULL DEFAULT now()
+    );
+
+    -- Insert-only, high frequency. Deliberately no FK to vehicles:
+    -- telemetry can precede registration, which is the cross-stream race the cache must handle.
+    CREATE TABLE positions (
+      id          bigserial        PRIMARY KEY,
+      vehicle_id  bigint           NOT NULL,
+      lat         double precision NOT NULL,
+      lng         double precision NOT NULL,
+      recorded_at timestamptz      NOT NULL
+    );
+
+    -- Serves only the e2e oracle query (latest position per vehicle). The worker never reads the DB.
+    CREATE INDEX positions_latest_idx ON positions (vehicle_id, recorded_at DESC, id DESC);
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels: { app: postgres }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector:
+    matchLabels: { app: postgres }
+  template:
+    metadata:
+      labels: { app: postgres }
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          args: ["-c", "wal_level=logical", "-c", "max_replication_slots=4", "-c", "max_wal_senders=4"]
+          envFrom: [{ secretRef: { name: postgres } }]
+          ports: [{ containerPort: 5432 }]
+          readinessProbe:
+            exec: { command: ["pg_isready", "-U", "fleet", "-d", "fleet"] }
+            periodSeconds: 2
+          resources:
+            requests: { memory: 128Mi, cpu: 100m }
+            limits: { memory: 256Mi }
+          volumeMounts:
+            - { name: schema, mountPath: /docker-entrypoint-initdb.d }
+            - { name: data, mountPath: /var/lib/postgresql/data }
+      volumes:
+        - { name: schema, configMap: { name: postgres-schema } }
+        - { name: data, emptyDir: {} }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  selector: { app: postgres }
+  ports: [{ port: 5432 }]

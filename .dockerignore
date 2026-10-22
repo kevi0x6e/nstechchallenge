@@ -1,0 +1,8 @@
+**/bin/
+**/obj/
+.git/
+.devenv/
+.devspace/
+docs/
+k8s/
+tests/

@@ -1,0 +1,39 @@
+version: v2beta1
+name: fleet
+
+# Images are built locally and loaded into the kind node (no registry).
+images:
+  cache-worker:
+    image: fleet/cache-worker
+    tags: [dev]
+    dockerfile: ./Dockerfile
+    context: .
+    buildArgs: { PROJECT: Fleet.CacheWorker }
+  mock-writers:
+    image: fleet/mock-writers
+    tags: [dev]
+    dockerfile: ./Dockerfile
+    context: .
+    buildArgs: { PROJECT: Fleet.MockWriters }
+  e2e:
+    image: fleet/e2e
+    tags: [dev]
+    dockerfile: ./Dockerfile
+    context: .
+    buildArgs: { PROJECT: Fleet.E2E }
+
+deployments:
+  infra:
+    namespace: fleet
+    kubectl:
+      manifests: [k8s/infra/]
+  apps:
+    namespace: fleet
+    kubectl:
+      manifests: [k8s/apps/]
+
+pipelines:
+  deploy: |-
+    build_images --all
+    create_deployments infra
+    create_deployments apps
