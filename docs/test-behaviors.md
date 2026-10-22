@@ -11,10 +11,10 @@ Formato Given / When / Then. A coluna **Automação** indica onde cada comportam
 | TB-02 | Nova posição refletida | IT `New_position_is_reflected` · E2E assert |
 | TB-03 | Posição fora de ordem ignorada | IT `Stale_position_is_ignored` · E2E (≈10% de `recordedAt` atrasado) |
 | TB-04 | Estado fora de ordem ignorado | IT `Stale_state_is_ignored` · E2E (replay sobre cache vivo) |
-| TB-05 | Evento CDC duplicado é no-op | IT `Duplicate_event_is_noop` · E2E (restart do conector, kill do worker, inserts duplicados) |
+| TB-05 | Evento CDC duplicado é no-op | IT `Duplicate_event_is_noop` · E2E (replay do offset 0 reentrega todos os eventos; kill do worker reentrega os offsets não commitados; inserts duplicados em `positions`) |
 | TB-06 | Delete marca tombstone e não ressuscita | IT `Delete_flags_vehicle`, `Reinsert_after_delete_resurrects` · E2E assert |
 | TB-07 | Posição antes do veículo existir | IT `Position_before_vehicle` · E2E (5 veículos da corrida) |
-| TB-08 | Restart do worker no meio do stream não perde nada | IT `Redelivery_after_restart_is_noop` · E2E (kill do pod + assert) |
+| TB-08 | Restart do worker no meio do stream não perde nada | IT `Redelivery_after_restart_is_noop` · E2E (kill do pod com o writer de posições em plena escrita + assert) |
 | TB-09 | Replay do offset 0 reconstrói o cache idêntico | IT `Shuffled_duplicated_replays_converge` · E2E (digest: replay sobre o cache vivo e rebuild com FLUSHALL) |
 | TB-10 | Transição snapshot → streaming | IT `Snapshot_then_streaming_overlap` · E2E (seed antes do conector e stream concorrente ao snapshot) |
 | TB-11 | Estado espelha a ordem de commit, não o tempo de negócio | E2E assert (updates com `state_updated_at` antigo; o cache tem que bater com o banco) |
@@ -62,7 +62,7 @@ Formato Given / When / Then. A coluna **Automação** indica onde cada comportam
 ### TB-08 — Restart do worker no meio do stream
 - **Given** o worker já aplicou um batch, mas o offset não foi commitado
 - **When** o pod morre e o batch é re-entregue
-- **Then** nenhuma escrita é aplicada (no-op) e nada se perde. No E2E, `kubectl delete pod` acontece com os writers em plena escrita, e o assert final contra o banco passa
+- **Then** nenhuma escrita é aplicada (no-op) e nada se perde. No E2E, `kubectl delete pod` acontece com o writer de posições ainda escrevendo, e o assert final contra o banco passa
 
 ### TB-09 — Replay reconstrói o cache idêntico
 - **Given** o histórico completo de eventos dos dois tópicos

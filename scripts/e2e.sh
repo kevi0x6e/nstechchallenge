@@ -84,7 +84,7 @@ $TOOL writer-stream fleet/mock-writers:dev stream --seed "$SEED" --positions-rat
 writers=$!
 sleep 4
 connect_api POST "/connectors/$connector/restart?includeTasks=true" >/dev/null
-echo "   restarted Debezium connector (re-emits since its last flushed offset)"
+echo "   restarted Debezium connector (it may re-emit events after its last flushed offset; the guard makes that harmless)"
 sleep 3
 kc delete pod -l app=cache-worker --wait=false >/dev/null
 echo "   killed the cache worker mid-stream (uncommitted offsets get re-delivered)"
